@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>testing_ticagrelor</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="replication_files/libs/clipboard/clipboard.min.js"></script>
+<script src="replication_files/libs/quarto-html/quarto.js"></script>
+<script src="replication_files/libs/quarto-html/popper.min.js"></script>
+<script src="replication_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="replication_files/libs/quarto-html/anchor.min.js"></script>
+<link href="replication_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="replication_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="replication_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="replication_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="replication_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">testing_ticagrelor</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Load packages</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(tidyverse, TwoSampleMR, rsnps, meta, ggforestplot, patchwork)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Bring in the ticag snps and check it’s worked</p>
+<p>(yep, although the first row can be dropped)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>raw_ticag_data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"raw_data/ticag_snps.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 24 Columns: 12
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (4): SNP, Gene, Alleles, p-value
+dbl (8): Chr, Pos, MAF, N, Beta, SE(Beta), Info, Sift
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_ticag_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 12
+    chr snp         pos gene  alleles    maf     n   beta se_beta p_value   info
+  &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;
+1    NA &lt;NA&gt;    NA      &lt;NA&gt;  (major… NA        NA NA      NA     &lt;NA&gt;    NA    
+2     7 rs6247…  9.94e7 CYP3… A/G      0.034  3751  0.211   0.027 1.07x1…  0.746
+3     7 rs6247…  9.94e7 CYP3… G/A      0.034  3751  0.211   0.027 1.32x1…  0.748
+4     7 rs3559…  9.94e7 CYP3… A/G      0.035  3751  0.207   0.027 1.45x1…  0.750
+5     7 rs6247…  9.95e7 CYP3… C/T      0.031  3751  0.203   0.028 7.97x1…  0.746
+6     7 rs1826…  9.94e7 CYP3… C/G      0.007  3751  0.5     0.071 1.75x1…  0.551
+# ℹ 1 more variable: sift &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Now, let’s see how many of these are truly independent using the thresholds they use. Have to switch to numeric. Using standard TwoSampleMR settings, we only get one SNP…</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>standard_approach <span class="ot">&lt;-</span> raw_ticag_data <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p_value =</span> <span class="fu">gsub</span>(<span class="st">"x10"</span>, <span class="st">"e"</span>, p_value)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p_value =</span> <span class="fu">as.numeric</span>(p_value)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SNP =</span> snp, <span class="at">pval.exposure =</span> p_value) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clump_data</span>(<span class="at">clump_r2 =</span> <span class="fl">0.001</span>, <span class="at">clump_kb =</span> <span class="dv">10000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>API: public: http://gwas-api.mrcieu.ac.uk/</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Please look at vignettes for options on running this locally if you need to run many instances of this command.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Only one SNP for mpJ8th</code></pre>
+</div>
+</div>
+<p>So why do they get 7 SNPs? It’s because they alter the clumping threshold to be 100kb, not 10,000kb</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>their_approach <span class="ot">&lt;-</span> raw_ticag_data <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p_value =</span> <span class="fu">gsub</span>(<span class="st">"x10"</span>, <span class="st">"e"</span>, p_value)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p_value =</span> <span class="fu">as.numeric</span>(p_value)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SNP =</span> snp, <span class="at">pval.exposure =</span> p_value) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(SNP) <span class="sc">%&gt;%</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clump_data</span>(<span class="at">clump_r2 =</span> <span class="fl">0.001</span>, <span class="at">clump_kb =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Please look at vignettes for options on running this locally if you need to run many instances of this command.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Clumping 1MtWPG, 23 variants, using EUR population reference</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Removing 17 of 23 variants due to LD with other variants or absence from LD reference panel</code></pre>
+</div>
+</div>
+<p>Is this disingenious - are the SNPs truly in LD? Let’s have a look:</p>
+<p>Yep: they are in a HUGE amount of LD, the correlation between these SNPs is massive:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>matrix_snps <span class="ot">&lt;-</span> ieugwasr<span class="sc">::</span><span class="fu">ld_matrix</span>(<span class="at">variants =</span> their_approach<span class="sc">$</span>SNP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Please look at vignettes for options on running this locally if you need to run many instances of this command.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> ggcorrplot<span class="sc">::</span><span class="fu">ggcorrplot</span>(matrix_snps, <span class="at">hc.order =</span> F, <span class="at">lab =</span> T)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>p1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="replication_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Ok, let’s replicate the MR:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>exposure <span class="ot">&lt;-</span> their_approach <span class="sc">%&gt;%</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    SNP, </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect_allele.exposure =</span> <span class="fu">substring</span>(alleles,<span class="dv">1</span>,<span class="dv">1</span>),</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">other_allele.exposure =</span> <span class="fu">substring</span>(alleles,<span class="dv">3</span>,<span class="dv">3</span>),</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta.exposure =</span> beta,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">se.exposure =</span> se_beta,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">exposure =</span><span class="st">"ticagrelor"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.exposure =</span> <span class="st">"ticagrelor"</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf.exposure =</span> maf,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval.exposure =</span> pval.exposure</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>outcome <span class="ot">&lt;-</span> <span class="fu">extract_outcome_data</span>(exposure<span class="sc">$</span>SNP, <span class="fu">c</span>(<span class="st">"finn-b-AB1_SEPSIS"</span>,<span class="st">"ieu-b-4980"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">outcome =</span> <span class="fu">if_else</span>(<span class="fu">str_detect</span>(outcome,<span class="st">"4980"</span>), <span class="st">"UK Biobank"</span>, <span class="st">"FinnGen"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Extracting data for 6 SNP(s) from 2 GWAS(s)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding proxies for 1 SNPs in outcome finn-b-AB1_SEPSIS</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Extracting data for 1 SNP(s) from 1 GWAS(s)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(exposure, outcome)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Harmonising ticagrelor (ticagrelor) and FinnGen (finn-b-AB1_SEPSIS)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Harmonising ticagrelor (ticagrelor) and UK Biobank (ieu-b-4980)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>res_mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(dat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Analysing 'ticagrelor' on 'finn-b-AB1_SEPSIS'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Analysing 'ticagrelor' on 'ieu-b-4980'</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>res_mr <span class="sc">%&gt;%</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(method <span class="sc">==</span> <span class="st">"Inverse variance weighted"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  ggforestplot<span class="sc">::</span><span class="fu">forestplot</span>(<span class="at">name =</span> outcome, <span class="at">estimate =</span> b, <span class="at">se =</span> se)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="replication_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>So, we can replicate it but it’s in the wrong direction: why?</p>
+<p>Have they got the alleles wrong: let’s go back to the original paper (where we get our data from, the PLATO GWAS): yep, they confirm that the beta is with respect to the minor allele. But if we look at their S2, they call the major and minor alleles wrong.</p>
+<p>Let’s bring in their sup table describing the IV’s and compare with our table: yep, we have the same SNPs</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"raw_data/their_exposure_from_sup.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 6 Columns: 12
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (4): exposure_their, SNP, Minor
+allele, Major
+allele
+dbl (8): Chr, Position, MAF, Beta, SE, P-value, R-square, F-statistic
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>d <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SNP =</span> snp) <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(exposure) <span class="sc">%&gt;%</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> beta, <span class="at">y =</span> beta.exposure)) <span class="sc">+</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>() <span class="sc">+</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"From their supplementary"</span>) <span class="sc">+</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"From PLATO GWAS sup table"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(SNP)`</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="replication_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>But do the major and minor alleles match?</p>
+<p>No:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>d <span class="sc">%&gt;%</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SNP =</span> snp) <span class="sc">%&gt;%</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(exposure) <span class="sc">%&gt;%</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP, minor_allele, effect_allele.exposure, maf, eaf.exposure)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(SNP)`</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+  SNP         minor_allele effect_allele.exposure   maf eaf.exposure
+  &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt;                  &lt;dbl&gt;        &lt;dbl&gt;
+1 rs62471956  G            A                      0.034        0.034
+2 rs147642358 G            A                      0.022        0.022
+3 rs62471929  A            G                      0.047        0.047
+4 rs140607780 G            A                      0.016        0.016
+5 rs140104968 C            T                      0.019        0.019
+6 rs117038461 C            T                      0.017        0.017</code></pre>
+</div>
+</div>
+<p>Ok, which is the ‘true’ minor allele according to1kg?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ncbi_snp <span class="ot">&lt;-</span> rsnps<span class="sc">::</span><span class="fu">ncbi_snp_query</span>(d<span class="sc">$</span>snp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Getting info about the following rsIDs: rs62471956, rs147642358, rs62471929, rs140607780, rs140104968, rs117038461</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>d <span class="sc">%&gt;%</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SNP =</span> snp) <span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(exposure) <span class="sc">%&gt;%</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP, minor_allele, effect_allele.exposure, maf) <span class="sc">%&gt;%</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ncbi_minor =</span>   ncbi_snp<span class="sc">$</span>minor, <span class="at">ncbi_maf =</span> ncbi_snp<span class="sc">$</span>maf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(SNP)`</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 6
+  SNP         minor_allele effect_allele.exposure   maf ncbi_minor ncbi_maf
+  &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt;                  &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;
+1 rs62471956  G            A                      0.034 A            0.0341
+2 rs147642358 G            A                      0.022 &lt;NA&gt;        NA     
+3 rs62471929  A            G                      0.047 G            0.0357
+4 rs140607780 G            A                      0.016 A            0.0103
+5 rs140104968 C            T                      0.019 T            0.0150
+6 rs117038461 C            T                      0.017 T            0.0151</code></pre>
+</div>
+</div>
+<p>The minor allele is incorrectly coded in their manuscript. In every case where NCBI has a minor allele, the MAF matches the minor allele in the original PLATO GWAS. So they have flipped the results completely.</p>
+<p>Anyway, let’s see if their analysis stands up with the formal clumping:<br>
+</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>exposure_clumped <span class="ot">&lt;-</span> exposure <span class="sc">%&gt;%</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clump_data</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Please look at vignettes for options on running this locally if you need to run many instances of this command.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Clumping ticagrelor, 6 variants, using EUR population reference</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Removing 5 of 6 variants due to LD with other variants or absence from LD reference panel</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>dat_clumped <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(exposure_clumped, outcome)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Harmonising ticagrelor (ticagrelor) and FinnGen (finn-b-AB1_SEPSIS)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Harmonising ticagrelor (ticagrelor) and UK Biobank (ieu-b-4980)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>res_clumped <span class="ot">&lt;-</span> <span class="fu">mr</span>(dat_clumped)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Analysing 'ticagrelor' on 'finn-b-AB1_SEPSIS'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Analysing 'ticagrelor' on 'ieu-b-4980'</code></pre>
+</div>
+</div>
+<p>Ok, let’s plot the whole thing. First use our IVW function to meta-analyse across both.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>ivw <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  TE <span class="ot">=</span> df<span class="sc">$</span>b</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  SE <span class="ot">=</span> df<span class="sc">$</span>se</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  m1 <span class="ot">&lt;-</span> <span class="fu">metagen</span>(TE, SE, <span class="at">verbose =</span> T, <span class="at">control=</span><span class="fu">list</span>(<span class="at">stepadj=</span><span class="fl">0.3</span>, <span class="at">maxiter =</span><span class="dv">1000</span>), <span class="at">common =</span> T, <span class="at">random =</span> T) </span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">het =</span> m1<span class="sc">$</span>I2,</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">het_p =</span> m1<span class="sc">$</span>pval.Q,</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">pval =</span> m1<span class="sc">$</span>pval.fixed,</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">upper =</span> m1<span class="sc">$</span>upper.fixed,</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">lower =</span> m1<span class="sc">$</span>lower.fixed,</span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">b =</span> m1<span class="sc">$</span>TE.fixed,</span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">se =</span> m1<span class="sc">$</span>seTE.fixed,</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">het_lower =</span> m1<span class="sc">$</span>lower.I2,</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">het_upper =</span> m1<span class="sc">$</span>upper.I2,</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">q =</span> m1<span class="sc">$</span>Q</span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>         )</span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>dat_clumped</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         SNP effect_allele.exposure other_allele.exposure effect_allele.outcome
+1 rs62471956                      A                     G                     A
+2 rs62471956                      A                     G                     A
+  other_allele.outcome beta.exposure beta.outcome eaf.exposure eaf.outcome
+1                    G         0.211   -0.0037000        0.034   0.0441400
+2                    G         0.211    0.0708473        0.034   0.0529423
+  remove palindromic ambiguous        id.outcome chr      pos se.outcome
+1  FALSE       FALSE     FALSE finn-b-AB1_SEPSIS   7 99421085  0.0462000
+2  FALSE       FALSE     FALSE        ieu-b-4980   7 99421085  0.0306501
+  samplesize.outcome pval.outcome    outcome originalname.outcome
+1                 NA    0.9370000    FinnGen          Septicaemia
+2             486484    0.0208061 UK Biobank               Sepsis
+   outcome.deprecated mr_keep.outcome data_source.outcome proxy.outcome
+1 Septicaemia ||  ||             TRUE                 igd            NA
+2      Sepsis ||  ||             TRUE                 igd            NA
+  target_snp.outcome proxy_snp.outcome target_a1.outcome target_a2.outcome
+1               &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;
+2               &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;
+  proxy_a1.outcome proxy_a2.outcome se.exposure   exposure id.exposure
+1             &lt;NA&gt;             &lt;NA&gt;       0.027 ticagrelor  ticagrelor
+2             &lt;NA&gt;             &lt;NA&gt;       0.027 ticagrelor  ticagrelor
+  pval.exposure action mr_keep
+1      1.07e-14      2    TRUE
+2      1.07e-14      2    TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>results_main <span class="ot">&lt;-</span> res_mr <span class="sc">%&gt;%</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(method <span class="sc">==</span> <span class="st">"Inverse variance weighted"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ivw</span>() <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">outcome =</span> <span class="st">"Meta-analysis"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(res_mr <span class="sc">%&gt;%</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(method <span class="sc">==</span> <span class="st">"Inverse variance weighted"</span>) ) <span class="sc">%&gt;%</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="st">"B: Ours, Correlated SNPs remain:"</span>)</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>dat_clumped</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         SNP effect_allele.exposure other_allele.exposure effect_allele.outcome
+1 rs62471956                      A                     G                     A
+2 rs62471956                      A                     G                     A
+  other_allele.outcome beta.exposure beta.outcome eaf.exposure eaf.outcome
+1                    G         0.211   -0.0037000        0.034   0.0441400
+2                    G         0.211    0.0708473        0.034   0.0529423
+  remove palindromic ambiguous        id.outcome chr      pos se.outcome
+1  FALSE       FALSE     FALSE finn-b-AB1_SEPSIS   7 99421085  0.0462000
+2  FALSE       FALSE     FALSE        ieu-b-4980   7 99421085  0.0306501
+  samplesize.outcome pval.outcome    outcome originalname.outcome
+1                 NA    0.9370000    FinnGen          Septicaemia
+2             486484    0.0208061 UK Biobank               Sepsis
+   outcome.deprecated mr_keep.outcome data_source.outcome proxy.outcome
+1 Septicaemia ||  ||             TRUE                 igd            NA
+2      Sepsis ||  ||             TRUE                 igd            NA
+  target_snp.outcome proxy_snp.outcome target_a1.outcome target_a2.outcome
+1               &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;
+2               &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;              &lt;NA&gt;
+  proxy_a1.outcome proxy_a2.outcome se.exposure   exposure id.exposure
+1             &lt;NA&gt;             &lt;NA&gt;       0.027 ticagrelor  ticagrelor
+2             &lt;NA&gt;             &lt;NA&gt;       0.027 ticagrelor  ticagrelor
+  pval.exposure action mr_keep
+1      1.07e-14      2    TRUE
+2      1.07e-14      2    TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>results_clumped <span class="ot">&lt;-</span> res_clumped <span class="sc">%&gt;%</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ivw</span>() <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">outcome =</span> <span class="st">"Meta-analysis"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(res_clumped) <span class="sc">%&gt;%</span> </span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="st">"C: Ours, Correlated SNPs removed"</span>)</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>their_results <span class="ot">&lt;-</span></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">group =</span> <span class="st">"A: Reported results"</span>,</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">outcome =</span> <span class="fu">c</span>(<span class="st">"UK Biobank"</span>, <span class="st">"FinnGen"</span>, <span class="st">"Meta-analysis"</span>),</span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">b =</span> <span class="fu">log</span>(<span class="fu">c</span>(<span class="fl">0.81</span>,<span class="fl">0.93</span>,<span class="fl">0.82</span>)),</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">pval =</span> <span class="fu">c</span>(<span class="fl">0.0029</span>,<span class="fl">0.6086</span>, <span class="fl">0.0037</span>),</span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">se =</span> <span class="fu">get_se</span>(b, pval))</span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> their_results <span class="sc">%&gt;%</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(results_main, results_clumped) <span class="sc">%&gt;%</span></span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">meta =</span> <span class="fu">if_else</span>(outcome <span class="sc">==</span> <span class="st">"Meta-analysis"</span>, <span class="st">"z"</span>, <span class="st">"none"</span>)) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(meta) <span class="sc">%&gt;%</span></span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">forestplot</span>(<span class="at">name =</span> outcome, <span class="at">estimate =</span> b, <span class="at">se =</span> se, <span class="at">colour =</span> meta, <span class="at">logodds =</span> T) <span class="sc">+</span></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a>  ggforce<span class="sc">::</span><span class="fu">facet_col</span>(</span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">facets =</span> <span class="sc">~</span>group,</span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">scales =</span> <span class="st">"free_y"</span>,</span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">space =</span> <span class="st">"free"</span></span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Odds ratio per increase in AUC of Ticagrelor"</span>)</span>
+<span id="cb54-24"><a href="#cb54-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb54-25"><a href="#cb54-25" aria-hidden="true" tabindex="-1"></a>p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="replication_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

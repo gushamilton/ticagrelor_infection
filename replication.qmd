@@ -1,0 +1,215 @@
+---
+title: "testing_ticagrelor"
+format: html
+editor: visual
+---
+
+Load packages
+
+```{r}
+pacman::p_load(tidyverse, TwoSampleMR, rsnps, meta, ggforestplot, patchwork)
+```
+
+Bring in the ticag snps and check it's worked
+
+(yep, although the first row can be dropped)
+
+```{r}
+raw_ticag_data <- read_csv("raw_data/ticag_snps.csv") %>%
+  janitor::clean_names()
+head(raw_ticag_data)
+```
+
+Now, let's see how many of these are truly independent using the thresholds they use. Have to switch to numeric. Using standard TwoSampleMR settings, we only get one SNP...
+
+```{r}
+
+
+standard_approach <- raw_ticag_data %>%
+  mutate(p_value = gsub("x10", "e", p_value)) %>%
+  mutate(p_value = as.numeric(p_value)) %>%
+  rename(SNP = snp, pval.exposure = p_value) %>%
+  drop_na() %>%
+  clump_data(clump_r2 = 0.001, clump_kb = 10000)
+
+```
+
+So why do they get 7 SNPs? It's because they alter the clumping threshold to be 100kb, not 10,000kb
+
+```{r}
+
+their_approach <- raw_ticag_data %>%
+  mutate(p_value = gsub("x10", "e", p_value)) %>%
+  mutate(p_value = as.numeric(p_value)) %>%
+  rename(SNP = snp, pval.exposure = p_value) %>%
+  drop_na(SNP) %>%
+  clump_data(clump_r2 = 0.001, clump_kb = 100)
+
+```
+
+Is this disingenious - are the SNPs truly in LD? Let's have a look:
+
+Yep: they are in a HUGE amount of LD, the correlation between these SNPs is massive:
+
+```{r}
+
+matrix_snps <- ieugwasr::ld_matrix(variants = their_approach$SNP)
+p1 <- ggcorrplot::ggcorrplot(matrix_snps, hc.order = F, lab = T)
+
+p1
+
+```
+
+Ok, let's replicate the MR:
+
+```{r}
+
+exposure <- their_approach %>%
+  transmute(
+    SNP, 
+    effect_allele.exposure = substring(alleles,1,1),
+    other_allele.exposure = substring(alleles,3,3),
+    beta.exposure = beta,
+    se.exposure = se_beta,
+    exposure ="ticagrelor",
+    id.exposure = "ticagrelor",
+    eaf.exposure = maf,
+    pval.exposure = pval.exposure
+  )
+
+outcome <- extract_outcome_data(exposure$SNP, c("finn-b-AB1_SEPSIS","ieu-b-4980")) %>%
+  mutate(outcome = if_else(str_detect(outcome,"4980"), "UK Biobank", "FinnGen"))
+
+dat <- harmonise_data(exposure, outcome)
+res_mr <- mr(dat)
+res_mr %>%
+  filter(method == "Inverse variance weighted") %>%
+  ggforestplot::forestplot(name = outcome, estimate = b, se = se)
+
+```
+
+So, we can replicate it but it's in the wrong direction: why?
+
+Have they got the alleles wrong: let's go back to the original paper (where we get our data from, the PLATO GWAS): yep, they confirm that the beta is with respect to the minor allele. But if we look at their S2, they call the major and minor alleles wrong.
+
+Let's bring in their sup table describing the IV's and compare with our table: yep, we have the same SNPs
+
+```{r}
+
+d <- read_csv("raw_data/their_exposure_from_sup.csv") %>%
+  janitor::clean_names()
+
+
+d %>%
+  rename(SNP = snp) %>%
+  left_join(exposure) %>%
+  ggplot(aes(x = beta, y = beta.exposure)) +
+  geom_point() +
+  geom_abline() +
+  xlab("From their supplementary") +
+  ylab("From PLATO GWAS sup table")
+
+```
+
+But do the major and minor alleles match?
+
+No:
+
+```{r}
+
+d %>%
+  rename(SNP = snp) %>%
+  left_join(exposure) %>%
+  select(SNP, minor_allele, effect_allele.exposure, maf, eaf.exposure)
+
+```
+
+Ok, which is the 'true' minor allele according to1kg?
+
+```{r}
+
+ncbi_snp <- rsnps::ncbi_snp_query(d$snp)
+
+d %>%
+  rename(SNP = snp) %>%
+  left_join(exposure) %>%
+  select(SNP, minor_allele, effect_allele.exposure, maf) %>%
+  mutate(ncbi_minor =   ncbi_snp$minor, ncbi_maf = ncbi_snp$maf)
+
+
+```
+
+The minor allele is incorrectly coded in their manuscript. In every case where NCBI has a minor allele, the MAF matches the minor allele in the original PLATO GWAS. So they have flipped the results completely.
+
+Anyway, let's see if their analysis stands up with the formal clumping:\
+
+```{r}
+
+exposure_clumped <- exposure %>%
+  clump_data()
+
+dat_clumped <- harmonise_data(exposure_clumped, outcome)
+res_clumped <- mr(dat_clumped)
+
+
+
+```
+
+Ok, let's plot the whole thing. First use our IVW function to meta-analyse across both.
+
+```{r}
+
+ivw <- function(df) {
+  TE = df$b
+  SE = df$se
+  m1 <- metagen(TE, SE, verbose = T, control=list(stepadj=0.3, maxiter =1000), common = T, random = T) 
+  tibble(
+         het = m1$I2,
+         het_p = m1$pval.Q,
+         pval = m1$pval.fixed,
+         upper = m1$upper.fixed,
+         lower = m1$lower.fixed,
+         b = m1$TE.fixed,
+         se = m1$seTE.fixed,
+         het_lower = m1$lower.I2,
+         het_upper = m1$upper.I2,
+         q = m1$Q
+         )
+  
+}
+
+dat_clumped
+results_main <- res_mr %>%
+    filter(method == "Inverse variance weighted") %>%
+  ivw() %>% mutate(outcome = "Meta-analysis") %>%
+  bind_rows(res_mr %>%
+    filter(method == "Inverse variance weighted") ) %>%
+  mutate(group = "B: Ours, Correlated SNPs remain:")
+
+dat_clumped
+results_clumped <- res_clumped %>%
+  ivw() %>% mutate(outcome = "Meta-analysis") %>%
+  bind_rows(res_clumped) %>% 
+  mutate(group = "C: Ours, Correlated SNPs removed")
+
+their_results <-
+  tibble(group = "A: Reported results",
+         outcome = c("UK Biobank", "FinnGen", "Meta-analysis"),
+         b = log(c(0.81,0.93,0.82)),
+         pval = c(0.0029,0.6086, 0.0037),
+        se = get_se(b, pval))
+
+p2 <- their_results %>%
+  bind_rows(results_main, results_clumped) %>%
+  mutate(meta = if_else(outcome == "Meta-analysis", "z", "none")) %>% arrange(meta) %>%
+  forestplot(name = outcome, estimate = b, se = se, colour = meta, logodds = T) +
+  ggforce::facet_col(
+    facets = ~group,
+    scales = "free_y",
+    space = "free"
+  ) +
+  theme(legend.position = "none") +
+  xlab("Odds ratio per increase in AUC of Ticagrelor")
+  
+p2
+```
